@@ -7,6 +7,7 @@ from groq import Groq
 import mysql.connector
 from mysql.connector import Error
 import warnings
+import os
 warnings.filterwarnings('ignore')
 
 # ====================== INITIALIZE SESSION STATE ======================
@@ -76,7 +77,8 @@ else:
         df = pd.read_sql("SELECT * FROM shopping_trends", st.session_state.conn)
         st.success(f"✅ Data Loaded from MySQL: {len(df)} records")
     else:
-        df = pd.read_csv("data/shopping_trends.csv")
+        csv_path = os.path.join(os.path.dirname(__file__), "data/shopping_trends.csv")
+        df = pd.read_csv(csv_path)
         st.info("Using CSV file (Click 'Connect to MySQL' to use database)")
 
     # ====================== SEGMENTATION ======================
