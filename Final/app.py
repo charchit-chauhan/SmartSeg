@@ -56,21 +56,25 @@ else:
         st.sidebar.success("✅ Groq AI Connected!")
 
     # ====================== MySQL CONNECTION (Persistent) ======================
-    st.sidebar.header("🗄️ MySQL Database")
-    if st.sidebar.button("Connect to MySQL") or st.session_state.conn is not None:
-        if st.session_state.conn is None:
-            try:
-                conn = mysql.connector.connect(
-                    host=os.getenv("MYSQL_HOST", "localhost"),
-                    user=os.getenv("MYSQL_USER", "root"),
-                    password=os.getenv("MYSQL_PASSWORD", ""),           
-                    database=os.getenv("MYSQL_DATABASE", "SmartSeg")
-                )
-                st.session_state.conn = conn
-                st.sidebar.success("✅ Connected to MySQL!")
-            except Error as e:
-                st.sidebar.warning("⚠️ MySQL not available. Using CSV file instead.")
-                st.session_state.conn = None
+    # Only show MySQL option in local environment
+    if os.getenv("STREAMLIT_SERVER_HEADLESS") is None or os.getenv("MYSQL_HOST"):
+        st.sidebar.header("🗄️ MySQL Database")
+        if st.sidebar.button("Connect to MySQL") or st.session_state.conn is not None:
+            if st.session_state.conn is None:
+                try:
+                    conn = mysql.connector.connect(
+                        host=os.getenv("MYSQL_HOST", "localhost"),
+                        user=os.getenv("MYSQL_USER", "root"),
+                        password=os.getenv("MYSQL_PASSWORD", ""),           
+                        database=os.getenv("MYSQL_DATABASE", "SmartSeg")
+                    )
+                    st.session_state.conn = conn
+                    st.sidebar.success("✅ Connected to MySQL!")
+                except Error as e:
+                    st.sidebar.warning("⚠️ MySQL not available. Using CSV file instead.")
+                    st.session_state.conn = None
+    else:
+        st.sidebar.info("📊 Running on Streamlit Cloud - MySQL disabled. Using CSV data.")
 
     # Load Data
     if st.session_state.conn:
