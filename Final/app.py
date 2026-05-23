@@ -61,15 +61,15 @@ else:
         if st.session_state.conn is None:
             try:
                 conn = mysql.connector.connect(
-                    host="localhost",
-                    user="root",
-                    password="",           
-                    database="SmartSeg"
+                    host=os.getenv("MYSQL_HOST", "localhost"),
+                    user=os.getenv("MYSQL_USER", "root"),
+                    password=os.getenv("MYSQL_PASSWORD", ""),           
+                    database=os.getenv("MYSQL_DATABASE", "SmartSeg")
                 )
                 st.session_state.conn = conn
                 st.sidebar.success("✅ Connected to MySQL!")
             except Error as e:
-                st.sidebar.error(f"MySQL Error: {e}")
+                st.sidebar.warning("⚠️ MySQL not available. Using CSV file instead.")
                 st.session_state.conn = None
 
     # Load Data
