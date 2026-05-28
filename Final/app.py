@@ -55,28 +55,10 @@ else:
         st.session_state.groq_key = groq_key
         st.sidebar.success("✅ Groq AI Connected!")
 
-    # ====================== MySQL CONNECTION (Persistent) ======================
-    # Only show MySQL option in local environment
-    if os.getenv("STREAMLIT_SERVER_HEADLESS") is None or os.getenv("MYSQL_HOST"):
-        st.sidebar.header("🗄️ MySQL Database")
-        if st.sidebar.button("Connect to MySQL") or st.session_state.conn is not None:
-            if st.session_state.conn is None:
-                try:
-                    conn = mysql.connector.connect(
-                        host=os.getenv("MYSQL_HOST", "localhost"),
-                        user=os.getenv("MYSQL_USER", "root"),
-                        password=os.getenv("MYSQL_PASSWORD", ""),           
-                        database=os.getenv("MYSQL_DATABASE", "SmartSeg")
-                    )
-                    st.session_state.conn = conn
-                    st.sidebar.success("✅ Connected to MySQL!")
-                except Error as e:
-                    st.sidebar.warning("⚠️ MySQL not available. Using CSV file instead.")
-                    st.session_state.conn = None
-    else:
-        st.sidebar.info("📊 Running on Streamlit Cloud - MySQL disabled. Using CSV data.")
+        # ====================== RAILWAY MySQL CONNECTION ======================
+    st.sidebar.header("🌐 Railway MySQL Database")
 
-    # Try to connect automatically on Railway
+    # Auto connect when running on Railway
     if st.session_state.conn is None:
         try:
             conn = mysql.connector.connect(
@@ -97,9 +79,8 @@ else:
         df = pd.read_sql("SELECT * FROM shopping_trends", st.session_state.conn)
         st.success(f"✅ Data Loaded from Railway MySQL: {len(df)} records")
     else:
-        csv_path = os.path.join(os.path.dirname(__file__), "data/shopping_trends.csv")
-        df = pd.read_csv(csv_path)
-        st.info("Using CSV file (Click 'Connect to MySQL' to use database)")
+        df = pd.read_csv("data/shopping_trends.csv")
+        st.info("✅ Using Local CSV File")
 
     # ====================== SEGMENTATION ======================
     @st.cache_resource
