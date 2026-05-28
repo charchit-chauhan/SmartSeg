@@ -58,28 +58,37 @@ else:
         # ====================== RAILWAY MySQL CONNECTION ======================
     st.sidebar.header("🌐 Railway MySQL Database")
 
-    # Auto connect when running on Railway
+    # Auto connect when running on Railway (use environment variables)
     if st.session_state.conn is None:
-        try:
-            conn = mysql.connector.connect(
-                host="mysql.railway.internal",
-                port=3306,
-                user="root",
-                password="hCtGXOSnXCegaquUUjDXvMeYRVvNjmnS",
-                database="railway"
-            )
-            st.session_state.conn = conn
-            st.sidebar.success("✅ Connected to Railway MySQL!")
-        except Exception as e:
-            st.sidebar.error(f"❌ Connection Failed: {e}")
-            st.session_state.conn = None
+        railway_host = os.getenv("RAILWAY_MYSQL_HOST", "mysql.railway.internal")
+        railway_user = os.getenv("RAILWAY_MYSQL_USER", "root")
+        railway_password = os.getenv("RAILWAY_MYSQL_PASSWORD", "sqCuMLlVpHaDlEwrszVpPThjahGfrWvB")
+        railway_database = os.getenv("RAILWAY_MYSQL_DATABASE", "railway")
+        
+        if railway_password:  # Only attempt connection if credentials are provided
+            try:
+                conn = mysql.connector.connect(
+                    host=railway_host,
+                    port=3306,
+                    user=railway_user,
+                    password=railway_password,
+                    database=railway_database
+                )
+                st.session_state.conn = conn
+                st.sidebar.success("✅ Connected to Railway MySQL!")
+            except Exception as e:
+                st.sidebar.warning(f"⚠️ Railway connection failed. Using CSV file.")
+                st.session_state.conn = None
+        else:
+            st.sidebar.info("📌 Set Railway MySQL credentials via environment variables to connect.")
 
     # ====================== LOAD DATA ======================
     if st.session_state.conn:
         df = pd.read_sql("SELECT * FROM shopping_trends", st.session_state.conn)
         st.success(f"✅ Data Loaded from Railway MySQL: {len(df)} records")
     else:
-        df = pd.read_csv("data/shopping_trends.csv")
+        csv_path = os.path.join(os.path.dirname(__file__), "data/shopping_trends.csv")
+        df = pd.read_csv(csv_path)
         st.info("✅ Using Local CSV File")
 
     # ====================== SEGMENTATION ======================
