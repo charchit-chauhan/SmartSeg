@@ -60,19 +60,19 @@ else:
 
     # Auto connect when running on Railway (use environment variables)
     if st.session_state.conn is None:
-        railway_host = os.getenv("RAILWAY_MYSQL_HOST", "mysql.railway.internal")
-        railway_user = os.getenv("RAILWAY_MYSQL_USER", "root")
-        railway_password = os.getenv("RAILWAY_MYSQL_PASSWORD", "sqCuMLlVpHaDlEwrszVpPThjahGfrWvB")
-        railway_database = os.getenv("RAILWAY_MYSQL_DATABASE", "railway")
+        RAILWAY_MYSQL_HOST = "mysql.railway.internal"
+        RAILWAY_MYSQL_USER = "root"
+        RAILWAY_MYSQL_PASSWORD = "sqCuMLlVpHaDlEwrszVpPThjahGfrWvB"
+        RAILWAY_MYSQL_DATABASE = "railway"
         
-        if railway_password:  # Only attempt connection if credentials are provided
+        if RAILWAY_MYSQL_PASSWORD:  # Only attempt connection if credentials are provided
             try:
                 conn = mysql.connector.connect(
-                    host=railway_host,
+                    host=RAILWAY_MYSQL_HOST,
                     port=3306,
-                    user=railway_user,
-                    password=railway_password,
-                    database=railway_database
+                    user=RAILWAY_MYSQL_USER,
+                    password=RAILWAY_MYSQL_PASSWORD,
+                    database=RAILWAY_MYSQL_DATABASE
                 )
                 st.session_state.conn = conn
                 st.sidebar.success("✅ Connected to Railway MySQL!")
