@@ -62,11 +62,11 @@ else:
     if st.session_state.conn is None:
         try:
             conn = mysql.connector.connect(
-                host="mysql.railway.internal",
-                port=3306,
-                user="root",
-                password="hCtGXOSnXCegaquUUjDXvMeYRVvNjmnS",
-                database="railway"
+                host=os.getenv("MYSQL_HOST", "mysql.railway.internal"),
+                port=int(os.getenv("MYSQL_PORT", 3306)),
+                user=os.getenv("MYSQL_USER", "root"),
+                password=os.getenv("MYSQL_PASSWORD", ""),
+                database=os.getenv("MYSQL_DATABASE", "railway")
             )
             st.session_state.conn = conn
             st.sidebar.success("✅ Connected to Railway MySQL!")
