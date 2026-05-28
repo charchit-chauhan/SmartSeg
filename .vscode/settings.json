@@ -1,0 +1,20 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 33060,
+            "driver": "MySQL",
+            "name": "Mysql Local",
+            "database": "SmartSeg",
+            "username": "root",
+            "password": "Rjkc5752@",
+            "connectionTimeout": 30
+        }
+    ]
+}
