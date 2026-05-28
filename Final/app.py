@@ -55,11 +55,6 @@ else:
         st.session_state.groq_key = groq_key
         st.sidebar.success("✅ Groq AI Connected!")
 
-<<<<<<< HEAD:SmartSeg/app.py
-    
-          # ====================== RAILWAY MySQL CONNECTION ======================
-    st.sidebar.header("🌐 Railway MySQL Database")
-=======
     # ====================== MySQL CONNECTION (Persistent) ======================
     # Only show MySQL option in local environment
     if os.getenv("STREAMLIT_SERVER_HEADLESS") is None or os.getenv("MYSQL_HOST"):
@@ -80,7 +75,6 @@ else:
                     st.session_state.conn = None
     else:
         st.sidebar.info("📊 Running on Streamlit Cloud - MySQL disabled. Using CSV data.")
->>>>>>> 18c61056a65ff9d083a397fbf56676446713d553:Final/app.py
 
     # Try to connect automatically on Railway
     if st.session_state.conn is None:
@@ -103,15 +97,10 @@ else:
         df = pd.read_sql("SELECT * FROM shopping_trends", st.session_state.conn)
         st.success(f"✅ Data Loaded from Railway MySQL: {len(df)} records")
     else:
-<<<<<<< HEAD:SmartSeg/app.py
-        df = pd.read_csv("data/shopping_trends.csv")
-        st.info("✅ Using Local CSV File")
-=======
         csv_path = os.path.join(os.path.dirname(__file__), "data/shopping_trends.csv")
         df = pd.read_csv(csv_path)
         st.info("Using CSV file (Click 'Connect to MySQL' to use database)")
 
->>>>>>> 18c61056a65ff9d083a397fbf56676446713d553:Final/app.py
     # ====================== SEGMENTATION ======================
     @st.cache_resource
     def perform_segmentation(df):
