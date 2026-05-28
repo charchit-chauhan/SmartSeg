@@ -54,31 +54,33 @@ else:
         st.session_state.groq_key = groq_key
         st.sidebar.success("✅ Groq AI Connected!")
 
-    # ====================== MySQL CONNECTION (Persistent) ======================
-    st.sidebar.header("🗄️ MySQL Database")
-    if st.sidebar.button("Connect to MySQL") or st.session_state.conn is not None:
-        if st.session_state.conn is None:
-            try:
-                conn = mysql.connector.connect(
-                    host="localhost",
-                    user="root",
-                    password="",           
-                    database="SmartSeg"
-                )
-                st.session_state.conn = conn
-                st.sidebar.success("✅ Connected to MySQL!")
-            except Error as e:
-                st.sidebar.error(f"MySQL Error: {e}")
-                st.session_state.conn = None
+    
+          # ====================== RAILWAY MySQL CONNECTION ======================
+    st.sidebar.header("🌐 Railway MySQL Database")
 
-    # Load Data
+    # Try to connect automatically on Railway
+    if st.session_state.conn is None:
+        try:
+            conn = mysql.connector.connect(
+                host="mysql.railway.internal",
+                port=3306,
+                user="root",
+                password="hCtGXOSnXCegaquUUjDXvMeYRVvNjmnS",
+                database="railway"
+            )
+            st.session_state.conn = conn
+            st.sidebar.success("✅ Connected to Railway MySQL!")
+        except Exception as e:
+            st.sidebar.error(f"❌ Connection Failed: {e}")
+            st.session_state.conn = None
+
+    # ====================== LOAD DATA ======================
     if st.session_state.conn:
         df = pd.read_sql("SELECT * FROM shopping_trends", st.session_state.conn)
-        st.success(f"✅ Data Loaded from MySQL: {len(df)} records")
+        st.success(f"✅ Data Loaded from Railway MySQL: {len(df)} records")
     else:
         df = pd.read_csv("data/shopping_trends.csv")
-        st.info("Using CSV file (Click 'Connect to MySQL' to use database)")
-
+        st.info("✅ Using Local CSV File")
     # ====================== SEGMENTATION ======================
     @st.cache_resource
     def perform_segmentation(df):
@@ -377,7 +379,7 @@ else:
                                             default=df['Season'].unique(),
                                             key="tab4_season")
 
-        # Apply Filter in Pandas (since Segment_Name is not in MySQL)
+        # Apply Filter in Pandas
         filtered_df = df[
             (df['Segment_Name'].isin(selected_segments)) &
             (df['Category'].isin(selected_categories)) &
@@ -386,7 +388,7 @@ else:
 
         st.caption(f"Showing insights for **{len(filtered_df)}** filtered records")
 
-        # ==================== MySQL QUERIES (Without Segment_Name filter) ====================
+        # ==================== MySQL QUERIES ====================
         if st.session_state.conn:
             st.subheader("1. Top 10 Best Selling Categories")
             query1 = f"""
@@ -417,7 +419,7 @@ else:
             result2 = pd.read_sql(query2, st.session_state.conn)
             st.dataframe(result2, use_container_width=True)
 
-            st.subheader("3. Revenue by Customer Segment (Python)")
+            st.subheader("3. Revenue by Customer Segment")
             segment_summary = filtered_df.groupby('Segment_Name').agg({
                 'Customer ID': 'count',
                 'Purchase Amount (USD)': ['sum', 'mean']
@@ -427,6 +429,8 @@ else:
 
         else:
             st.warning("Connect to MySQL to see detailed insights")
+
+        st.info("💡 Change filters above to see updated insights.")
 
         st.info("💡 Filters are applied across all insights. Segment filter works via Python (since Segment_Name is calculated).")
     with tab5:
