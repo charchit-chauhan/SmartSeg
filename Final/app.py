@@ -75,12 +75,20 @@ else:
             st.session_state.conn = None
 
     # ====================== LOAD DATA ======================
-    if st.session_state.conn:
-        df = pd.read_sql("SELECT * FROM shopping_trends", st.session_state.conn)
-        st.success(f"✅ Data Loaded from Railway MySQL: {len(df)} records")
-    else:
-        df = pd.read_csv("data/shopping_trends.csv")
-        st.info("✅ Using Local CSV File")
+    try:
+        if st.session_state.conn:
+            df = pd.read_sql("SELECT * FROM shopping_trends", st.session_state.conn)
+            st.success(f"✅ Data Loaded from Railway MySQL: {len(df)} records")
+        else:
+            # Use absolute path for CSV
+            csv_path = os.path.join(os.path.dirname(__file__), "data", "shopping_trends.csv")
+            if not os.path.exists(csv_path):
+                csv_path = "/app/data/shopping_trends.csv"
+            df = pd.read_csv(csv_path)
+            st.info("✅ Using Local CSV File")
+    except Exception as e:
+        st.error(f"❌ Failed to load data: {e}")
+        st.stop()
 
     # ====================== SEGMENTATION ======================
     @st.cache_resource
@@ -517,3 +525,4 @@ else:
                 st.error("Customer not found!")
 
     st.sidebar.info("SmartSeg - Major Internship Project")
+
