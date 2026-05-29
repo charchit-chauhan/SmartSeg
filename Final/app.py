@@ -84,11 +84,10 @@ else:
         st.session_state.groq_key = groq_key
         st.sidebar.success("✅ Groq AI Connected!")
 
-        # ====================== SMART MySQL CONNECTION (Railway + Local) ======================
-    st.sidebar.header("🌐 Database Connection")
+        # ====================== RAILWAY MySQL CONNECTION ======================
+    st.sidebar.header("🌐 Railway MySQL Database")
 
-    # Auto try Railway connection when deployed
-    if st.session_state.conn is None:
+    if st.sidebar.button("🔗 Connect to Railway MySQL"):
         try:
             conn = mysql.connector.connect(
                 host="centerbeam.proxy.rlwy.net",
@@ -99,24 +98,18 @@ else:
             )
             st.session_state.conn = conn
             st.sidebar.success("✅ Connected to Railway MySQL!")
-        except:
+            st.success("✅ MySQL Connected Successfully!")
+        except Exception as e:
+            st.sidebar.error(f"❌ Connection Failed: {e}")
             st.session_state.conn = None
 
-    # Fallback to Local MySQL (if you want)
-    if st.session_state.conn is None:
-        if st.sidebar.button("Connect to Local MySQL"):
-            try:
-                conn = mysql.connector.connect(
-                    host="localhost",
-                    user="root",
-                    password="", 
-                    database="SmartSeg",
-                    port=3306
-                )
-                st.session_state.conn = conn
-                st.sidebar.success("✅ Connected to Local MySQL!")
-            except Exception as e:
-                st.sidebar.error(f"Local MySQL Failed: {e}")
+    # ====================== LOAD DATA ======================
+    if st.session_state.conn:
+        df = pd.read_sql("SELECT * FROM shopping_trends", st.session_state.conn)
+        st.success(f"✅ Data Loaded from Railway MySQL: {len(df)} records")
+    else:
+        df = pd.read_csv("data/shopping_trends.csv")
+        st.info("✅ Using Local CSV File")
 
     # ====================== LOAD DATA ======================
     if st.session_state.conn:
