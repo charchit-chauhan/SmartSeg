@@ -9,6 +9,10 @@ from mysql.connector import Error
 import warnings
 import os
 warnings.filterwarnings('ignore')
+from pathlib import Path
+
+# Resolved path to local CSV file (relative to this script)
+DATA_PATH = Path(__file__).resolve().parent / "data" / "shopping_trends.csv"
 
 
 def is_valid_groq_key(key):
@@ -17,7 +21,10 @@ def is_valid_groq_key(key):
 # ====================== CACHING FOR SPEED ======================
 @st.cache_data
 def load_data():
-    return pd.read_csv("data/shopping_trends.csv")
+    try:
+        return pd.read_csv(DATA_PATH)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"CSV file not found at {DATA_PATH}. Ensure 'data/shopping_trends.csv' is present.")
 
 @st.cache_resource
 def perform_segmentation(df):
@@ -108,17 +115,24 @@ else:
         df = pd.read_sql("SELECT * FROM shopping_trends", st.session_state.conn)
         st.success(f"✅ Data Loaded from Railway MySQL: {len(df)} records")
     else:
-        df = pd.read_csv("data/shopping_trends.csv")
-        st.info("✅ Using Local CSV File")
+        try:
+            df = load_data()
+            st.info("✅ Using Local CSV File")
+        except FileNotFoundError as e:
+            st.error(str(e))
+            st.stop()
 
     # ====================== LOAD DATA ======================
     if st.session_state.conn:
         df = pd.read_sql("SELECT * FROM shopping_trends", st.session_state.conn)
         st.success(f"✅ Data Loaded from Railway MySQL: {len(df)} records")
     else:
-        csv_path = os.path.join(os.path.dirname(__file__), "data/shopping_trends.csv")
-        df = pd.read_csv(csv_path)
-        st.info("Using CSV file (Click 'Connect to MySQL' to use database)")
+        try:
+            df = load_data()
+            st.info("Using CSV file (Click 'Connect to MySQL' to use database)")
+        except FileNotFoundError as e:
+            st.error(str(e))
+            st.stop()
 
     def normalize_column_names(df):
         df = df.rename(columns=lambda c: c.strip())
