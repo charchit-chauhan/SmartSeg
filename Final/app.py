@@ -10,6 +10,35 @@ import warnings
 import os
 warnings.filterwarnings('ignore')
 
+
+def is_valid_groq_key(key):
+    return isinstance(key, str) and key.startswith("gsk_") and len(key) >= 30
+
+# ====================== CACHING FOR SPEED ======================
+@st.cache_data
+def load_data():
+    return pd.read_csv("data/shopping_trends.csv")
+
+@st.cache_resource
+def perform_segmentation(df):
+    # Safe column selection
+    possible_features = ['Age', 'Purchase Amount (USD)', 'Previous Purchases', 
+                        'Review Rating', 'Purchase Amount', 'Amount']
+    features = [col for col in possible_features if col in df.columns]
+    if len(features) < 2:
+        features = df.select_dtypes(include=['number']).columns[:3].tolist()
+    
+    X = df[features]
+    scaler = StandardScaler()
+    scaled = scaler.fit_transform(X)
+    
+    kmeans = KMeans(n_clusters=5, random_state=42, n_init=10)
+    df['Segment'] = kmeans.fit_predict(scaled)
+    
+    segment_map = {0: "At Risk", 1: "VIP Customers", 2: "New Customers", 
+                   3: "Loyal Customers", 4: "Hibernating"}
+    df['Segment_Name'] = df['Segment'].map(segment_map)
+    return df
 # ====================== INITIALIZE SESSION STATE ======================
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
@@ -47,7 +76,7 @@ else:
         st.session_state.logged_in = False
         st.rerun()
 
-    # ====================== GROQ API KEY ======================
+     # ====================== GROQ API KEY ======================
     st.sidebar.header("🤖 Groq AI Settings")
     groq_key = st.sidebar.text_input("Enter Groq API Key", type="password", value=st.session_state.groq_key)
     
@@ -55,57 +84,93 @@ else:
         st.session_state.groq_key = groq_key
         st.sidebar.success("✅ Groq AI Connected!")
 
-        # ====================== RAILWAY MySQL CONNECTION ======================
+<<<<<<< HEAD:SmartSeg/app.py
+    
+          # ====================== RAILWAY MySQL CONNECTION ======================
     st.sidebar.header("🌐 Railway MySQL Database")
+=======
+    # ====================== MySQL CONNECTION (Persistent) ======================
+    # Only show MySQL option in local environment
+    if os.getenv("STREAMLIT_SERVER_HEADLESS") is None or os.getenv("MYSQL_HOST"):
+        st.sidebar.header("🗄️ MySQL Database")
+        if st.sidebar.button("Connect to MySQL") or st.session_state.conn is not None:
+            if st.session_state.conn is None:
+                try:
+                    conn = mysql.connector.connect(
+                        host=os.getenv("MYSQL_HOST", "localhost"),
+                        user=os.getenv("MYSQL_USER", "root"),
+                        password=os.getenv("MYSQL_PASSWORD", ""),           
+                        database=os.getenv("MYSQL_DATABASE", "SmartSeg")
+                    )
+                    st.session_state.conn = conn
+                    st.sidebar.success("✅ Connected to MySQL!")
+                except Error as e:
+                    st.sidebar.warning("⚠️ MySQL not available. Using CSV file instead.")
+                    st.session_state.conn = None
+    else:
+        st.sidebar.info("📊 Running on Streamlit Cloud - MySQL disabled. Using CSV data.")
+>>>>>>> 18c61056a65ff9d083a397fbf56676446713d553:Final/app.py
 
-    # Auto connect when running on Railway (use environment variables)
+    # Try to connect automatically on Railway
     if st.session_state.conn is None:
-        RAILWAY_MYSQL_HOST = "mysql.railway.internal"
-        RAILWAY_MYSQL_USER = "root"
-        RAILWAY_MYSQL_PASSWORD = "sqCuMLlVpHaDlEwrszVpPThjahGfrWvB"
-        RAILWAY_MYSQL_DATABASE = "railway"
-        
-        if RAILWAY_MYSQL_PASSWORD:  # Only attempt connection if credentials are provided
-            try:
-                conn = mysql.connector.connect(
-                    host=RAILWAY_MYSQL_HOST,
-                    port=3306,
-                    user=RAILWAY_MYSQL_USER,
-                    password=RAILWAY_MYSQL_PASSWORD,
-                    database=RAILWAY_MYSQL_DATABASE
-                )
-                st.session_state.conn = conn
-                st.sidebar.success("✅ Connected to Railway MySQL!")
-            except Exception as e:
-                st.sidebar.warning(f"⚠️ Railway connection failed. Using CSV file.")
-                st.session_state.conn = None
-        else:
-            st.sidebar.info("📌 Set Railway MySQL credentials via environment variables to connect.")
+        try:
+            conn = mysql.connector.connect(
+                host="mysql.railway.internal",
+                port=3306,
+                user="root",
+                password="hCtGXOSnXCegaquUUjDXvMeYRVvNjmnS",
+                database="railway"
+            )
+            st.session_state.conn = conn
+            st.sidebar.success("✅ Connected to Railway MySQL!")
+        except Exception as e:
+            st.sidebar.error(f"❌ Connection Failed: {e}")
+            st.session_state.conn = None
 
     # ====================== LOAD DATA ======================
     if st.session_state.conn:
         df = pd.read_sql("SELECT * FROM shopping_trends", st.session_state.conn)
         st.success(f"✅ Data Loaded from Railway MySQL: {len(df)} records")
     else:
+<<<<<<< HEAD:SmartSeg/app.py
+        df = pd.read_csv("data/shopping_trends.csv")
+        st.info("✅ Using Local CSV File")
+=======
         csv_path = os.path.join(os.path.dirname(__file__), "data/shopping_trends.csv")
         df = pd.read_csv(csv_path)
         st.info("✅ Using Local CSV File")
 
+>>>>>>> 18c61056a65ff9d083a397fbf56676446713d553:Final/app.py
     # ====================== SEGMENTATION ======================
     @st.cache_resource
     def perform_segmentation(df):
-        features = df[['Age', 'Purchase Amount (USD)', 'Previous Purchases', 'Review Rating']]
+        # Find available numeric columns for clustering
+        possible_features = ['Age', 'Purchase Amount (USD)', 'Previous Purchases', 
+                           'Review Rating', 'Purchase Amount', 'Amount']
+        
+        # Use only columns that actually exist
+        features = [col for col in possible_features if col in df.columns]
+        
+        # Fallback if needed
+        if len(features) < 2:
+            features = df.select_dtypes(include=['number']).columns[:3].tolist()
+        
+        X = df[features]
+        
         scaler = StandardScaler()
-        scaled = scaler.fit_transform(features)
+        scaled = scaler.fit_transform(X)
+        
         kmeans = KMeans(n_clusters=5, random_state=42, n_init=10)
         df['Segment'] = kmeans.fit_predict(scaled)
         
         segment_map = {0: "At Risk", 1: "VIP Customers", 2: "New Customers", 
                        3: "Loyal Customers", 4: "Hibernating"}
         df['Segment_Name'] = df['Segment'].map(segment_map)
+        
         return df
 
     df = perform_segmentation(df)
+   
 
         # ====================== FINAL BALANCED LOYALTY SYSTEM ======================
     # Optimized for your dataset (lower thresholds)
@@ -127,8 +192,8 @@ else:
     st.sidebar.subheader("📊 Tier Distribution")
     st.sidebar.write(df['Tier'].value_counts())
 
-       # ====================== OFFER ======================
-       
+    # ====================== OFFER ======================
+
     def get_personalized_offer(segment):
         offers = {
             "VIP Customers": [
@@ -139,7 +204,7 @@ else:
                 "🌟 Double Loyalty Points on every purchase",
                 "🎁 Free Gift Voucher worth ₹500 on next visit"
             ],
-            
+
             "Loyal Customers": [
                 "❤️ 20% OFF + Extra 100 Loyalty Points",
                 "🔄 Buy 2 Get 1 Free on Selected Categories",
@@ -148,7 +213,7 @@ else:
                 "⭐ Monthly Loyalty Bonus Offer",
                 "🛍️ Special Preview Sale Access"
             ],
-            
+
             "New Customers": [
                 "🌟 Welcome Offer: 30% OFF on First Purchase",
                 "🎁 Free Gift with First Order",
@@ -156,7 +221,7 @@ else:
                 "💰 ₹300 OFF on minimum purchase of ₹999",
                 "📲 Sign-up Bonus: 150 Loyalty Points"
             ],
-            
+
             "At Risk": [
                 "🔥 Win-Back Special: 35% OFF + Buy 1 Get 1",
                 "❤️ We Miss You Offer: Flat 40% OFF",
@@ -164,7 +229,7 @@ else:
                 "🎟️ Reactivation Coupon: ₹500 OFF on ₹1500",
                 "💌 Special Comeback Gift"
             ],
-            
+
             "Hibernating": [
                 "📨 Reactivation Bomb: 40% OFF + Free Delivery",
                 "🔄 Restart Offer: Double Points + 25% OFF",
@@ -174,15 +239,18 @@ else:
             ]
         }
         return offers.get(segment, ["Special Offer Available!"])
-        
-    # ====================== GROQ AI FUNCTION ======================
+
+    # ====================== GROQ AI FUNCTION (Strong Dataset Context) ======================
     def ai_analytics_chat(query):
         if not st.session_state.groq_key:
             return "⚠️ Please enter your Groq API Key in the sidebar."
 
+        if not is_valid_groq_key(st.session_state.groq_key):
+            return "❌ Groq Error: The entered Groq API key does not look valid. Please enter a key starting with 'gsk_'."
+
         try:
             client = Groq(api_key=st.session_state.groq_key)
-            
+
             context = f"""
             You are a data analyst. Answer ONLY using the current dataset.
             Total rows: {len(df)}
@@ -202,7 +270,10 @@ else:
             return response.choices[0].message.content
 
         except Exception as e:
-            return f"❌ Error: {str(e)}"
+            error_text = str(e)
+            if "invalid_api_key" in error_text.lower() or "401" in error_text:
+                return "❌ Groq Error: Invalid API key. Please update the key in the sidebar or set GROQ_API_KEY."
+            return f"❌ Groq Error: {error_text}"
 
     # ====================== TABS ======================
     tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
@@ -305,8 +376,8 @@ else:
             st.caption("Run custom SQL queries (Works best when connected to MySQL)")
             
             default_query = """SELECT Category, COUNT(*) as Total_Customers, 
-                              SUM(`Purchase Amount (USD)`) as Total_Revenue,
-                              ROUND(AVG(`Purchase Amount (USD)`), 2) as Avg_Spending
+                              SUM(Purchase_Amount_USD) as Total_Revenue,
+                              ROUND(AVG(Purchase_Amount_USD), 2) as Avg_Spending
                               FROM shopping_trends 
                               GROUP BY Category 
                               ORDER BY Total_Revenue DESC 
@@ -403,8 +474,8 @@ else:
             st.subheader("1. Top 10 Best Selling Categories")
             query1 = f"""
             SELECT Category, COUNT(*) as Total_Sold, 
-                   SUM(`Purchase Amount (USD)`) as Total_Revenue,
-                   ROUND(AVG(`Purchase Amount (USD)`), 2) as Avg_Purchase
+                   SUM(Purchase_Amount_USD) as Total_Revenue,
+                   ROUND(AVG(Purchase_Amount_USD), 2) as Avg_Purchase
             FROM shopping_trends 
             WHERE Category IN ({','.join([f"'{c}'" for c in selected_categories])})
               AND Season IN ({','.join([f"'{s}'" for s in selected_seasons])})
@@ -418,8 +489,8 @@ else:
             st.subheader("2. Sales by Season")
             query2 = f"""
             SELECT Season, COUNT(*) as Total_Transactions, 
-                   SUM(`Purchase Amount (USD)`) as Revenue,
-                   ROUND(AVG(`Purchase Amount (USD)`), 2) as Avg_Order_Value
+                   SUM(Purchase_Amount_USD) as Revenue,
+                   ROUND(AVG(Purchase_Amount_USD), 2) as Avg_Order_Value
             FROM shopping_trends 
             WHERE Category IN ({','.join([f"'{c}'" for c in selected_categories])})
               AND Season IN ({','.join([f"'{s}'" for s in selected_seasons])})
@@ -443,6 +514,7 @@ else:
         st.info("💡 Change filters above to see updated insights.")
 
         st.info("💡 Filters are applied across all insights. Segment filter works via Python (since Segment_Name is calculated).")
+    
     with tab5:
         st.header("💡 Sales & Retention Strategies")
         st.markdown("### 🎯 Proven Sales & Customer Retention Strategies")
@@ -484,18 +556,22 @@ else:
 
     with tab6:
         st.header("🤖 Groq AI Chat Assistant")
-        st.caption("Ask anything about sales, customers, segments, or strategies")
+        st.caption("Ask anything about your dataset (Clothing, Footwear, Age groups, Revenue, etc.)")
+        
         for msg in st.session_state.messages:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
-        if prompt := st.chat_input("Ask any question..."):
+        
+        if prompt := st.chat_input("Ask any question about the data..."):
             st.session_state.messages.append({"role": "user", "content": prompt})
             with st.chat_message("user"):
                 st.markdown(prompt)
+            
             with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
+                with st.spinner("Analyzing dataset..."):
                     response = ai_analytics_chat(prompt)
                     st.markdown(response)
+            
             st.session_state.messages.append({"role": "assistant", "content": response})
 
     with tab7:
