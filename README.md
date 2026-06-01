@@ -71,8 +71,7 @@ SQL Query Explorer
 Tier-wise Loyalty System
 Multi-Offer Recommendation
 Groq AI Business Assistant
-📸 Screenshots
-(Add screenshots here)
+
 
 Dashboard Overview
 Customer Segmentation
