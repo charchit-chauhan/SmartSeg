@@ -610,4 +610,4 @@ else:
             except:
                 st.error("Customer not found!")
 
-    st.sidebar.info("SmartSeg - Major Internship Project")
+    st.sidebar.info("SmartSeg - Major Internship Project")             
