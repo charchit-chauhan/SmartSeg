@@ -81,7 +81,7 @@ Personalized Offer Recommendation System </h3>
 SmartSeg is an algorithmic data science application designed to transition businesses from generic, broad-spectrum marketing to high-precision, data-driven consumer targeting. Built as a core functional module, the system processes raw transaction historical records and transforms them into behavioral metrics. By applying unsupervised machine learning algorithms (such as K-Means clustering), SmartSeg automatically divides a diverse consumer base into distinct, actionable cohorts based on shared purchasing traits. The application integrates a personalization decision engine that automatically maps tailored promotional strategies and product offerings to specific customer clusters, giving organizations a programmatic framework to maximize retention, optimize marketing expenses, and increase customer lifetime value.
 </p>
 <p>
-  <a href="https://github.com/sure-trust/CHARCHIT-CHAUHAN-g37-ai-ml/blob/7c715de29fd381100daf195e5db4e4b7fa299d78/Final%20capstone%20project/SURE%20Trust%20project%20document.pdf" target="_blank"><strong>→ View Full Project Report</strong></a>
+  <a href="SURE Trust project document.pdf" target="_blank"><strong>→ View Full Project Report</strong></a>
 </p>
 
 
